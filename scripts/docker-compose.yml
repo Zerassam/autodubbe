@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  autodubber:
+    build: .
+    container_name: autodubber
+    restart: unless-stopped
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./client_secrets.json:/app/client_secrets.json:ro
+      - ./drive_service_account.json:/app/drive_service_account.json:ro
+      - ./tmp:/tmp/autodubber
+    environment:
+      - TZ=UTC
+    # if you want to expose a port for oauth callback during initial auth
+    ports:
+      - "8080:8080

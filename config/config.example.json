@@ -1,0 +1,26 @@
+{
+  "SOURCE_CHANNEL_ID": "UC_Example_Source_Channel",
+  "POLL_INTERVAL_SECONDS": 180,
+  "TMP_DIR": "/tmp/autodubber",
+
+  "DRIVE": {
+    "USE_DRIVE": false,
+    "SERVICE_ACCOUNT_FILE": "path/to/drive-service-account.json",
+    "SOURCE_FOLDER_ID": "",
+    "READY_FOLDER_ID": ""
+  },
+
+  "YOUTUBE": {
+    "CLIENT_SECRETS_FILE": "client_secrets.json",
+    "CREDENTIALS_STORE": "youtube_creds.json"
+  },
+
+  "TRANSLATION": {
+    "SERVICE": "libre", 
+    "LIBRE_ENDPOINT": "https://libretranslate.de/translate"
+  },
+
+  "TTS": {
+    "ENGINE": "gtts"
+  }
+}

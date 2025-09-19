@@ -1,0 +1,42 @@
+[Unit]
+Description=AutoDubber pipeline worker
+After=network.target
+
+[Service]
+User=youruser
+WorkingDirectory=/path/to/AutoDubber
+ExecStart=/usr/bin/python3 /path/to/AutoDubber/pipeline_main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+===== FILE: Dockerfile =====
+# Dockerfile for AutoDubber
+FROM python:3.10-slim
+
+# install system deps
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    ffmpeg \
+    git \
+    build-essential \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# copy requirements and install
+COPY requirements.txt /app/requirements.txt
+RUN python -m pip install --upgrade pip setuptools wheel
+# Install PyTorch CPU wheels (adjust index-url if you have GPU)
+RUN pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision torchaudio || true
+RUN pip install -r /app/requirements.txt
+
+# copy project files
+COPY . /app
+
+ENV TMP_DIR=/tmp/autodubber
+VOLUME ["/tmp/autodubber"]
+
+CMD ["python","pipeline_main.py"]
