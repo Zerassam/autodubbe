@@ -1,6 +1,3 @@
-"""
-Main controller: poll -> download -> filter duration -> process -> upload -> cleanup
-"""
 import time
 import logging
 import os
@@ -11,21 +8,18 @@ from driver import is_video_cc, download_video, get_video_duration
 from processor import process_video_file
 from uploader import get_youtube_service, upload_video_to_youtube
 
-# تحميل الإعدادات
 cfg = load_config('config.json')
 setup_logging()
-
-# مجلد الملفات المؤقتة
 TMP = cfg.get('TMP_DIR', '/tmp/autodubber')
 ensure_dir(TMP)
 
-# فلترة الفيديوهات حسب الطول
-MAX_DURATION = cfg.get('VIDEO_FILTER', {}).get('MAX_DURATION_SECONDS', 60)
-MIN_DURATION = cfg.get('VIDEO_FILTER', {}).get('MIN_DURATION_SECONDS', 5)
+MAX_DURATION_NORMAL = cfg.get("VIDEO_FILTER", {}).get("MAX_DURATION_NORMAL", 900)
+MAX_DURATION_SHORT = cfg.get("VIDEO_FILTER", {}).get("MAX_DURATION_SHORT", 60)
+MIN_DURATION = cfg.get("VIDEO_FILTER", {}).get("MIN_DURATION", 5)
 
+IS_SHORT = False  # False للفيديو العادي، True للشورت / الريلز
 
 def cleanup_temp_files(video_id: str, tmp_dir: str):
-    """مسح الملفات المؤقتة الخاصة بفيديو معيّن."""
     try:
         for f in os.listdir(tmp_dir):
             if video_id in f:
@@ -36,7 +30,6 @@ def cleanup_temp_files(video_id: str, tmp_dir: str):
         logging.info(f"🧹 Temp files for {video_id} cleaned up.")
     except Exception as e:
         logging.error(f"Cleanup failed for {video_id}: {e}")
-
 
 def main_loop():
     channel = cfg['SOURCE_CHANNEL_ID']
@@ -51,29 +44,26 @@ def main_loop():
 
         for vid in new_vids:
             try:
-                # التأكد من أن الفيديو فيه ترجمة CC
                 ok, meta = is_video_cc(vid)
                 if not ok:
                     logging.info('Skipping non-CC video %s', vid)
                     mark_processed(vid)
                     continue
 
-                # تحميل الفيديو
-                local_video = download_video(vid, TMP)
+                local_video = download_video(vid, TMP, is_short=IS_SHORT)
                 if not local_video:
-                    logging.error('Download failed for %s', vid)
+                    logging.error('Download failed or skipped for %s', vid)
                     mark_processed(vid)
                     continue
 
-                # التحقق من طول الفيديو
                 duration = get_video_duration(local_video)
-                if duration > MAX_DURATION or duration < MIN_DURATION:
+                max_dur = MAX_DURATION_SHORT if IS_SHORT else MAX_DURATION_NORMAL
+                if duration > max_dur or duration < MIN_DURATION:
                     logging.info(f"Skipping video {vid}: duration {duration}s outside allowed range.")
                     cleanup_temp_files(Path(local_video).stem, TMP)
                     mark_processed(vid)
                     continue
 
-                # المعالجة (ترجمة + دبلجة)
                 final_video = process_video_file(local_video)
                 if not final_video:
                     logging.error('Processing failed for %s', vid)
@@ -81,28 +71,21 @@ def main_loop():
                     mark_processed(vid)
                     continue
 
-                # إعداد خدمة YouTube إذا لم تُنشأ بعد
                 if not yt_service:
                     yt_service = get_youtube_service(
                         cfg['YOUTUBE']['CLIENT_SECRETS_FILE'],
                         cfg['YOUTUBE']['CREDENTIALS_STORE']
                     )
 
-                # إعداد العنوان والوصف
                 title = f"[AR] {meta.get('title', '')}"
                 desc = f"مترجم ومدبلج آلياً. المصدر: https://www.youtube.com/watch?v={vid} | License: {meta.get('license', 'unknown')}"
-
-                # رفع الفيديو
                 upload_video_to_youtube(yt_service, final_video, title, desc)
 
-                # تنظيف الملفات
                 try:
                     os.remove(local_video)
                 except:
                     pass
                 cleanup_temp_files(Path(local_video).stem, TMP)
-
-                # وضع علامة أن الفيديو تمت معالجته
                 mark_processed(vid)
 
             except Exception as e:
@@ -110,7 +93,5 @@ def main_loop():
 
         time.sleep(cfg.get('POLL_INTERVAL_SECONDS', 60))
 
-
 if __name__ == '__main__':
     main_loop()
-    
