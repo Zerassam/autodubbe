@@ -3,11 +3,12 @@
   "POLL_INTERVAL_SECONDS": 900,
   "TMP_DIR": "/tmp/autodubber",
 
-  "YOUTUBE": {
+"YOUTUBE": {
     "CLIENT_SECRETS_FILE": "client_secrets.json",
     "CREDENTIALS_STORE": "youtube_creds.json",
-    "API_KEY": "PUT_YOUR_KEY_HERE"
-  },
+    "API_KEY": "PUT_YOUR_KEY_HERE",
+    "COOKIES_FILE": "/app/config/cookies.txt"
+},
 
   "TRANSLATION": {
     "SERVICE": "libre",
