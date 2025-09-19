@@ -1,6 +1,7 @@
 """
 Responsible for checking license and downloading videos (only CC/Public) using yt-dlp.
 Supports distinction between normal videos (<= 15min) and shorts (<= 60s).
+Supports optional cookies file for age-restricted or bot-protected videos.
 """
 import subprocess
 import json
@@ -10,12 +11,14 @@ import isodate
 import cv2
 from pathlib import Path
 from utils import ensure_dir, load_config
+import os
 
 cfg = load_config('config.json')
 TMP = cfg.get('TMP_DIR', '/tmp/autodubber')
 ensure_dir(TMP)
 
 API_KEY = cfg["YOUTUBE"].get("API_KEY")
+COOKIES_FILE = os.environ.get("YOUTUBE_COOKIES_FILE")  # <-- مسار الكوكيز من .env
 
 # حدود الطول
 MAX_NORMAL = cfg.get("VIDEO_FILTER", {}).get("MAX_DURATION_NORMAL", 900)   # 15 دقيقة
@@ -26,6 +29,8 @@ MIN_DUR = cfg.get("VIDEO_FILTER", {}).get("MIN_DURATION", 5)
 def is_video_cc(video_id):
     """يتأكد أن الفيديو Creative Commons أو Public Domain"""
     cmd = ['yt-dlp', '--dump-json', f'https://www.youtube.com/watch?v={video_id}']
+    if COOKIES_FILE:
+        cmd.insert(1, f'--cookies={COOKIES_FILE}')
     try:
         out = subprocess.check_output(cmd)
         meta = json.loads(out)
@@ -106,10 +111,11 @@ def download_video(video_id, out_dir=TMP):
 
     # تحميل الفيديو
     out_template = str(Path(out_dir) / f"{video_id}.%(ext)s")
-    cmd = [
-        'yt-dlp', '-f', 'bestvideo+bestaudio/best', '-o', out_template,
-        f'https://www.youtube.com/watch?v={video_id}'
-    ]
+    cmd = ['yt-dlp', '-f', 'bestvideo+bestaudio/best', '-o', out_template]
+    if COOKIES_FILE:
+        cmd.append(f'--cookies={COOKIES_FILE}')
+    cmd.append(f'https://www.youtube.com/watch?v={video_id}')
+
     logging.info('Downloading %s ...', video_id)
     subprocess.check_call(cmd)
 
