@@ -1,5 +1,5 @@
 {
-  "SOURCE_CHANNEL_ID": "UC_Example_Source_Channel",
+  "SOURCE_CHANNEL_ID": "UCf_PS8-T1w_VT1Kz-9G0nHw",
   "POLL_INTERVAL_SECONDS": 900,
   "TMP_DIR": "/tmp/autodubber",
 
@@ -19,8 +19,9 @@
   },
 
   "VIDEO_FILTER": {
-    "MAX_DURATION_SECONDS": 60,
-    "MIN_DURATION_SECONDS": 5
+    "MAX_DURATION_NORMAL": 900,
+    "MAX_DURATION_SHORT": 60,
+    "MIN_DURATION": 5
   },
 
   "DRIVE": {
