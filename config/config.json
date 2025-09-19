@@ -1,18 +1,12 @@
 {
   "SOURCE_CHANNEL_ID": "UC_Example_Source_Channel",
-  "POLL_INTERVAL_SECONDS": 900,  // كل 15 دقيقة
+  "POLL_INTERVAL_SECONDS": 900,
   "TMP_DIR": "/tmp/autodubber",
-
-  "DRIVE": {
-    "USE_DRIVE": false,
-    "SERVICE_ACCOUNT_FILE": "",
-    "SOURCE_FOLDER_ID": "",
-    "READY_FOLDER_ID": ""
-  },
 
   "YOUTUBE": {
     "CLIENT_SECRETS_FILE": "client_secrets.json",
-    "CREDENTIALS_STORE": "youtube_creds.json"
+    "CREDENTIALS_STORE": "youtube_creds.json",
+    "API_KEY": "PUT_YOUR_KEY_HERE"
   },
 
   "TRANSLATION": {
@@ -22,5 +16,17 @@
 
   "TTS": {
     "ENGINE": "gtts"
+  },
+
+  "VIDEO_FILTER": {
+    "MAX_DURATION_SECONDS": 60,
+    "MIN_DURATION_SECONDS": 5
+  },
+
+  "DRIVE": {
+    "USE_DRIVE": false,
+    "SERVICE_ACCOUNT_FILE": "path/to/drive-service-account.json",
+    "SOURCE_FOLDER_ID": "",
+    "READY_FOLDER_ID": ""
   }
 }
