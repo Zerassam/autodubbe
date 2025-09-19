@@ -3,7 +3,7 @@ google-api-python-client==2.90.0
 google-auth==2.19.0
 google-auth-oauthlib==1.1.0
 pydub==0.25.1
-gTTS==2.4.7
+gTTS==2.5.4
 requests==2.31.0
 openai-whisper==20231117
 yt-dlp==2023.12.30
