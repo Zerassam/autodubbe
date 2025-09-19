@@ -9,4 +9,5 @@ openai-whisper==20231117
 yt-dlp==2023.12.30
 python-dotenv==1.0.0
 isodate==0.6.1
+numpy==1.26.4
 opencv-python==4.8.1.78
