@@ -6,6 +6,8 @@ import os
 import subprocess
 import json
 import logging
+import tempfile
+import shutil
 from pathlib import Path
 import requests
 from gtts import gTTS
@@ -89,33 +91,56 @@ def tts_segments_and_sync(segments, voice_prefix='tts_seg'):
 
 
 def build_full_dub_audio(segments, out_audio_path):
-    import wave
-    total_dur = max([s['end'] for s in segments])
-    silent = str(Path(TMP)/'silent_{}.wav'.format(int(total_dur)))
-    cmd = ['ffmpeg','-y','-f','lavfi','-i', f'anullsrc=channel_layout=mono:sample_rate=16000', '-t', str(total_dur), silent]
-    subprocess.check_call(cmd)
-    concat_files = []
+    """Build complete dubbed audio track with proper timing."""
+    if not segments:
+        return None
+        
+    # Create silence for the full duration
+    total_dur = max([s['end'] for s in segments]) if segments else 10
+    temp_files = []
+    
+    # Create base silence
+    silence_file = str(Path(TMP) / 'base_silence.wav')
+    cmd_silence = ['ffmpeg', '-y', '-f', 'lavfi', '-i', 
+                   f'anullsrc=channel_layout=mono:sample_rate=22050', 
+                   '-t', str(total_dur + 1), silence_file]
+    subprocess.check_call(cmd_silence)
+    temp_files.append(silence_file)
+    
+    # Overlay each TTS segment at the correct time
+    current_input = silence_file
     for s in segments:
-        start = s['start']
-        if s.get('tts_path'):
-            pre = str(Path(TMP)/f'pre_{int(start*1000)}.wav')
-            cmd_pre = ['ffmpeg','-y','-f','lavfi','-i', f'anullsrc=channel_layout=mono:sample_rate=16000', '-t', str(start), pre]
-            subprocess.check_call(cmd_pre)
-            conv = str(Path(TMP)/f'conv_{int(start*1000)}.wav')
-            cmd_conv = ['ffmpeg','-y','-i', s['tts_path'], conv]
-            subprocess.check_call(cmd_conv)
-            concat_files.append(pre)
-            concat_files.append(conv)
-    trailing = str(Path(TMP)/'trailing.wav')
-    cmd_trail = ['ffmpeg','-y','-f','lavfi','-i', f'anullsrc=channel_layout=mono:sample_rate=16000', '-t', '0.5', trailing]
-    subprocess.check_call(cmd_trail)
-    concat_list = str(Path(TMP)/'concat_list.txt')
-    with open(concat_list, 'w', encoding='utf-8') as f:
-        for fname in concat_files:
-            f.write(f"file '{fname}'\n")
-        f.write(f"file '{trailing}'\n")
-    cmd_concat = ['ffmpeg','-y','-f','concat','-safe','0','-i', concat_list, '-c','copy', out_audio_path]
-    subprocess.check_call(cmd_concat)
+        if not s.get('tts_path') or not os.path.exists(s['tts_path']):
+            continue
+            
+        # Create output for this overlay
+        next_output = str(Path(TMP) / f'overlay_{len(temp_files)}.wav')
+        
+        # Overlay TTS at the correct timestamp
+        cmd_overlay = ['ffmpeg', '-y', '-i', current_input, '-i', s['tts_path'],
+                      '-filter_complex', f'[1:a]adelay={int(s["start"]*1000)}|{int(s["start"]*1000)}[delayed];[0:a][delayed]amix=inputs=2:dropout_transition=0',
+                      next_output]
+        try:
+            subprocess.check_call(cmd_overlay)
+            temp_files.append(next_output)
+            current_input = next_output
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Failed to overlay segment: {e}")
+            continue
+    
+    # Copy final result to output path
+    if current_input != silence_file:
+        shutil.copy2(current_input, out_audio_path)
+    else:
+        shutil.copy2(silence_file, out_audio_path)
+    
+    # Cleanup temp files
+    for f in temp_files:
+        try:
+            os.remove(f)
+        except:
+            pass
+            
     return out_audio_path
 
 

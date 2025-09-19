@@ -9,6 +9,15 @@ Automated pipeline that: watches a source YouTube channel for Creative Commons v
 
 This project is designed to run with minimal paid services; defaults use open-source/free tools. You *must* respect copyright and only process videos under permissive license (Creative Commons / Public Domain).
 
+## System Requirements
+
+- Python 3.8+
+- FFmpeg
+- yt-dlp
+- OpenAI Whisper
+- 2GB+ RAM (for video processing)
+- 5GB+ free disk space (temporary files)
+
 ## Contents
 - `pipeline_main.py` - main loop and queue worker
 - `watcher.py` - polls YouTube channel and enqueues new CC videos
@@ -16,20 +25,65 @@ This project is designed to run with minimal paid services; defaults use open-so
 - `processor.py` - transcription (Whisper), translation (LibreTranslate), TTS (gTTS), timing sync & merge (ffmpeg)
 - `uploader.py` - YouTube upload helper (OAuth2 interactive flow)
 - `utils.py` - helpers (logging, file utils, config loader)
+- `setup.py` - setup script for checking dependencies and initial configuration
 - `requirements.txt` - Python dependencies
 - `config.example.json` - example configuration file
-- `systemd/autodubber.service` - optional systemd unit example
+- `Dockerfile` & `docker-compose.yml` - containerized deployment
 
-## Quickstart (high-level)
-1. Create Python virtualenv and install dependencies: `pip install -r requirements.txt`.
-2. Install system dependencies: `yt-dlp`, `ffmpeg`, Whisper (local) if you plan to use it locally.
-3. Prepare Google APIs:
+## Quick Start
+
+### 1. System Dependencies
+```bash
+# Ubuntu/Debian
+sudo apt update && sudo apt install ffmpeg python3-pip python3-venv
+
+# macOS
+brew install ffmpeg python
+
+# Install yt-dlp and whisper
+pip install yt-dlp openai-whisper
+```
+
+### 2. Python Setup
+```bash
+# Clone and setup
+git clone <your-repo>
+cd AutoDubber
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Run setup script
+python setup.py
+```
+
+### 3. Google APIs Setup
    - Create a Google Cloud project, enable Drive API if you want Drive features.
    - Create OAuth 2.0 Client Credentials for YouTube Data API v3 (download `client_secrets.json`).
    - For Drive automated uploads, you can use a Service Account and share a folder with it.
-4. Copy `config.example.json` → `config.json` and fill values (channel id, drive folder ids, paths,...)
-5. Run `python pipeline_main.py` to start the worker loop.
+   - Get a YouTube Data API key for video metadata
 
+### 4. Configuration
+```bash
+# Copy example config
+cp config/config.example.json config/config.json
+# Edit config.json with your settings
+### 5. Run
+```bash
+python pipeline_main.py
+```
+
+## Docker Deployment
+```bash
+# Build and run
+docker-compose up -d
+
+# View logs
+docker-compose logs -f autodubber
+```
+```
 ## Notes
 - The pipeline processes videos sequentially and deletes temporary files after upload to keep storage usage small.
 - Test with a single known CC video first.
+- Monitor logs/ directory for detailed processing information.
+- The system respects YouTube API rate limits and video licensing.

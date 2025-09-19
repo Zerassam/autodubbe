@@ -2,10 +2,11 @@
 google-api-python-client==2.90.0
 google-auth==2.19.0
 google-auth-oauthlib==1.1.0
-google-cloud-translate==3.11.6
 pydub==0.25.1
 gTTS==2.4.7
 requests==2.31.0
-whisper==20230413
-yt-dlp==2024.04.04
+openai-whisper==20231117
+yt-dlp==2023.12.30
 python-dotenv==1.0.0
+isodate==0.6.1
+opencv-python==4.8.1.78

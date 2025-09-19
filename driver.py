@@ -7,6 +7,7 @@ import json
 import logging
 import requests
 import isodate
+import cv2
 from pathlib import Path
 from utils import ensure_dir, load_config
 
@@ -54,6 +55,19 @@ def get_video_duration_api(video_id):
     except Exception as e:
         logging.error("API duration check failed for %s: %s", video_id, e)
         return None
+
+
+def get_video_duration(video_path):
+    """Get video duration in seconds using ffprobe."""
+    try:
+        cmd = ['ffprobe', '-v', 'error', '-select_streams', 'v:0', 
+               '-show_entries', 'stream=duration', '-of', 'default=noprint_wrappers=1:nokey=1', 
+               video_path]
+        result = subprocess.check_output(cmd, stderr=subprocess.DEVNULL)
+        return float(result.decode().strip())
+    except Exception as e:
+        logging.error(f"Could not get duration for {video_path}: {e}")
+        return 0
 
 
 def download_video(video_id, out_dir=TMP):
