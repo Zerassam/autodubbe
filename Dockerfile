@@ -26,9 +26,10 @@ RUN pip install -r /app/requirements.txt
 COPY . /app
 
 # Create necessary directories
-RUN mkdir -p /app/logs /app/input /app/output /tmp/autodubber
+RUN mkdir -p /app/logs /app/input /app/output /tmp/autodubber /app/config
 
 ENV TMP_DIR=/tmp/autodubber
+ENV YOUTUBE_COOKIES_FILE=/app/config/youtube_cookies.txt
 VOLUME ["/tmp/autodubber", "/app/logs", "/app/config"]
 
 # Health check
