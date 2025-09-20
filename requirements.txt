@@ -11,3 +11,4 @@ python-dotenv==1.0.0
 isodate==0.6.1
 numpy==1.26.4
 opencv-python==4.8.1.78
+yt-dlp>=2025.01.01
