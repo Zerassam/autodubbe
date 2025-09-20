@@ -1,6 +1,5 @@
-SID = g.a0001QhXOxlD_0caIPzOKpw3j_cJmTJAYJMKbxgKRCeIAVx-NZRnl5SHnUMqkN-7QrSbUyQiiQACgYKAToSARUSFQHGX2Miu47nst_jddW1Lo81VgTzAxoVAUF8yKpckWB2nsc2pGwsApCuF74l0076
-VM255:2 HSID = Not found
-VM255:2 SSID = Not found
-VM255:2 APISID = xOQ2JA0r4dGgJaYc/AcSLBu6VBsSvuwKck
-VM255:2 SAPISID = 5PdkswzhW_3BHGp2/Ay82ldHiezn58j9NM
-VM255:2 SAPISIDCC = Not found
+# Netscape HTTP Cookie File
+# This file was generated manually
+.youtube.com    TRUE    /   FALSE   0   SID     g.a0001QhXOxlD_0caIPzOKpw3j_cJmTJAYJMKbxgKRCeIAVx-NZRnl5SHnUMqkN-7QrSbUyQiiQACgYKAToSARUSFQHGX2Miu47nst_jddW1Lo81VgTzAxoVAUF8yKpckWB2nsc2pGwsApCuF74l0076
+.youtube.com    TRUE    /   FALSE   0   APISID  xOQ2JA0r4dGgJaYc/AcSLBu6VBsSvuwKck
+.youtube.com    TRUE    /   FALSE   0   SAPISID 5PdkswzhW_3BHGp2/Ay82ldHiezn58j9NM
