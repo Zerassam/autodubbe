@@ -18,6 +18,13 @@ TMP = cfg.get('TMP_DIR', '/tmp/autodubber')
 ensure_dir(TMP)
 
 API_KEY = cfg["YOUTUBE"].get("API_KEY")
+
+# الخيار الافتراضي: ملف الكوكيز في مجلد config
+DEFAULT_COOKIES_FILE = Path('config') / 'cookies.txt'
+
+# السماح بالاستبدال بواسطة متغير البيئة
+COOKIES_FILE = Path(os.environ.get("YOUTUBE_COOKIES_FILE", DEFAULT_COOKIES_FILE))
+
 COOKIES_FILE = os.environ.get("YOUTUBE_COOKIES_FILE")  # <-- مسار الكوكيز من .env
 
 # حدود الطول
