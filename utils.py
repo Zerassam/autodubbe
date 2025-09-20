@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 def ensure_dir(p):
+    """Ensure the directory exists."""
     Path(p).mkdir(parents=True, exist_ok=True)
 
 def load_config(path='config.json'):
@@ -24,13 +25,16 @@ def load_config(path='config.json'):
     if 'YOUTUBE_API_KEY' in os.environ:
         config.setdefault('YOUTUBE', {})['API_KEY'] = os.environ['YOUTUBE_API_KEY']
     
+    if 'YOUTUBE_COOKIES_FILE' in os.environ:
+        config.setdefault('YOUTUBE', {})['COOKIES_FILE'] = os.environ['YOUTUBE_COOKIES_FILE']
+    
     if 'TMP_DIR' in os.environ:
         config['TMP_DIR'] = os.environ['TMP_DIR']
         
     return config
 
 def setup_logging(logpath=None, level=None):
-    """Enhanced logging setup with file rotation."""
+    """Enhanced logging setup with console + file output."""
     if level is None:
         level = os.environ.get('LOG_LEVEL', 'INFO')
     
@@ -40,14 +44,18 @@ def setup_logging(logpath=None, level=None):
     
     # Configure logging
     log_format = '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-    logging.basicConfig(
-        level=getattr(logging, level.upper()),
-        format=log_format,
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler(log_dir / 'autodubber.log')
-        ]
-    )
+    handlers = [logging.StreamHandler(sys.stdout)]
     
+    # Default log file
+    log_file = log_dir / 'autodubber.log'
+    handlers.append(logging.FileHandler(log_file))
+    
+    # Optional additional log path
     if logpath:
-        fh = logging.FileHandler(logpath)
+        handlers.append(logging.FileHandler(logpath))
+    
+    logging.basicConfig(
+        level=getattr(logging, level.upper(), logging.INFO),
+        format=log_format,
+        handlers=handlers
+    )
