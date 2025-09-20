@@ -25,8 +25,6 @@ DEFAULT_COOKIES_FILE = Path('config') / 'cookies.txt'
 # السماح بالاستبدال بواسطة متغير البيئة
 COOKIES_FILE = Path(os.environ.get("YOUTUBE_COOKIES_FILE", DEFAULT_COOKIES_FILE))
 
-COOKIES_FILE = os.environ.get("YOUTUBE_COOKIES_FILE")  # <-- مسار الكوكيز من .env
-
 # حدود الطول
 MAX_NORMAL = cfg.get("VIDEO_FILTER", {}).get("MAX_DURATION_NORMAL", 900)   # 15 دقيقة
 MAX_SHORT = cfg.get("VIDEO_FILTER", {}).get("MAX_DURATION_SHORT", 60)     # 60 ثانية
