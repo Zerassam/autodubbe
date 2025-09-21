@@ -1,13 +1,21 @@
-# Python dependencies
+# Google APIs
 google-api-python-client>=2.90.0
 google-auth>=2.19.0
 google-auth-oauthlib>=1.1.0
 google-auth-httplib2>=0.1.0
-pydub==0.25.1
+
+# Audio processing
+pydub>=0.25.1
 gTTS>=2.5.4
-requests==2.31.0
-openai-whisper==20231117
+
+# Whisper for transcription
+openai-whisper>=20231117
+
+# Video processing
 opencv-python-headless>=4.8.0
 yt-dlp>=2025.01.01
-python-dotenv==1.0.0
-isodate==0.6.1
+
+# Utilities
+requests>=2.31.0
+python-dotenv>=1.0.0
+isodate>=0.6.1
