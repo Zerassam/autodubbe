@@ -50,7 +50,7 @@ def main_loop():
                     mark_processed(vid)
                     continue
 
-                local_video = download_video(vid, TMP, is_short=IS_SHORT)
+                local_video = download_video(vid, TMP)
                 if not local_video:
                     logging.error('Download failed or skipped for %s', vid)
                     mark_processed(vid)

@@ -103,7 +103,7 @@ def is_short_format(video_path):
 
 
 def download_video(video_id, out_dir=TMP):
-    """تحميل الفيديو بعد التحقق من نوعه (short/normal)"""
+    """Download video after checking its type (short/normal)"""
     # التحقق من الطول عبر API
     dur = get_video_duration_api(video_id)
     if dur is not None:
@@ -122,7 +122,11 @@ def download_video(video_id, out_dir=TMP):
     cmd.append(f'https://www.youtube.com/watch?v={video_id}')
 
     logging.info('Downloading %s ...', video_id)
-    subprocess.check_call(cmd)
+    try:
+        subprocess.check_call(cmd)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Download failed for {video_id}: {e}")
+        return None
 
     # العثور على الملف الناتج
     p = Path(out_dir)

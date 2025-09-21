@@ -12,6 +12,7 @@ services:
     environment:
       - TZ=UTC
       - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
     # Expose port for OAuth callback during initial auth
     ports:
       - "8080:8080"

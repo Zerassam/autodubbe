@@ -11,15 +11,13 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install yt-dlp
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
-    && chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt /app/requirements.txt
 RUN python -m pip install --upgrade pip setuptools wheel
-RUN pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision torchaudio
+RUN pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision torchaudio --no-deps
 RUN pip install -r /app/requirements.txt
 
 # Copy project files

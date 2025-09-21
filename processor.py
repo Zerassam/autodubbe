@@ -18,15 +18,26 @@ ensure_dir(TMP)
 
 
 def extract_audio(video_path, out_wav):
+    """Extract audio from video file using ffmpeg"""
     cmd = ['ffmpeg', '-y', '-i', video_path, '-vn', '-acodec', 'pcm_s16le', '-ar', '16000', '-ac', '1', out_wav]
-    subprocess.check_call(cmd)
+    try:
+        subprocess.check_call(cmd, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Audio extraction failed: {e}")
+        raise
 
 
 def whisper_transcribe_get_srt(audio_path):
     logging.info('Running whisper for %s', audio_path)
     cmd = ['whisper', audio_path, '--model', 'small', '--output_format', 'srt', '--output_dir', TMP]
-    subprocess.check_call(cmd)
+    try:
+        subprocess.check_call(cmd)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Whisper transcription failed: {e}")
+        raise
     srt_file = str(Path(TMP) / (Path(audio_path).stem + '.srt'))
+    if not Path(srt_file).exists():
+        raise FileNotFoundError(f"SRT file not generated: {srt_file}")
     return srt_file
 
 
@@ -50,19 +61,28 @@ def parse_srt(srt_path):
 
 
 def translate_segments(segments, endpoint='https://libretranslate.de/translate', target='ar'):
+    """Translate text segments using LibreTranslate API"""
     headers = {'Content-Type': 'application/json'}
     for seg in segments:
+        if not seg['text'].strip():
+            seg['text_ar'] = seg['text']
+            continue
         payload = {'q': seg['text'], 'source': 'en', 'target': target, 'format': 'text'}
-        r = requests.post(endpoint, json=payload, headers=headers, timeout=30)
-        if r.ok:
-            seg['text_ar'] = r.json().get('translatedText')
-        else:
-            logging.error('Translation failed for: %s', seg['text'])
+        try:
+            r = requests.post(endpoint, json=payload, headers=headers, timeout=30)
+            if r.ok:
+                seg['text_ar'] = r.json().get('translatedText', seg['text'])
+            else:
+                logging.error('Translation failed for: %s (Status: %d)', seg['text'], r.status_code)
+                seg['text_ar'] = seg['text']
+        except requests.RequestException as e:
+            logging.error('Translation request failed for: %s (%s)', seg['text'], e)
             seg['text_ar'] = seg['text']
     return segments
 
 
 def tts_segments_and_sync(segments, voice_prefix='tts_seg'):
+    """Generate TTS audio for each segment and adjust timing"""
     files = []
     for i,seg in enumerate(segments):
         text = seg.get('text_ar') or seg['text']
@@ -70,8 +90,14 @@ def tts_segments_and_sync(segments, voice_prefix='tts_seg'):
             seg['tts_path'] = None
             continue
         out_mp3 = str(Path(TMP) / f"{voice_prefix}_{i}.mp3")
-        tts = gTTS(text=text, lang='ar')
-        tts.save(out_mp3)
+        try:
+            tts = gTTS(text=text, lang='ar')
+            tts.save(out_mp3)
+        except Exception as e:
+            logging.error(f"TTS generation failed for segment {i}: {e}")
+            seg['tts_path'] = None
+            continue
+            
         target_dur = seg['end'] - seg['start']
         cmd_probe = ['ffprobe','-v','error','-select_streams','a:0',
                      '-show_entries','stream=duration','-of','default=noprint_wrappers=1:nokey=1', out_mp3]
@@ -84,7 +110,13 @@ def tts_segments_and_sync(segments, voice_prefix='tts_seg'):
         atempo = max(0.5, min(1.0/speed if speed!=0 else 1.0, 2.0))
         out_fixed = str(Path(TMP) / f"{voice_prefix}_{i}_fixed.mp3")
         cmd_tempo = ['ffmpeg','-y','-i', out_mp3, '-filter:a', f"atempo={atempo}", out_fixed]
-        subprocess.check_call(cmd_tempo)
+        try:
+            subprocess.check_call(cmd_tempo, stderr=subprocess.DEVNULL)
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Audio tempo adjustment failed for segment {i}: {e}")
+            seg['tts_path'] = out_mp3  # Use original if tempo adjustment fails
+            files.append(out_mp3)
+            continue
         seg['tts_path'] = out_fixed
         files.append(out_fixed)
     return segments
@@ -104,7 +136,11 @@ def build_full_dub_audio(segments, out_audio_path):
     cmd_silence = ['ffmpeg', '-y', '-f', 'lavfi', '-i', 
                    f'anullsrc=channel_layout=mono:sample_rate=22050', 
                    '-t', str(total_dur + 1), silence_file]
-    subprocess.check_call(cmd_silence)
+    try:
+        subprocess.check_call(cmd_silence, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to create silence track: {e}")
+        return None
     temp_files.append(silence_file)
     
     # Overlay each TTS segment at the correct time
@@ -121,7 +157,7 @@ def build_full_dub_audio(segments, out_audio_path):
                       '-filter_complex', f'[1:a]adelay={int(s["start"]*1000)}|{int(s["start"]*1000)}[delayed];[0:a][delayed]amix=inputs=2:dropout_transition=0',
                       next_output]
         try:
-            subprocess.check_call(cmd_overlay)
+            subprocess.check_call(cmd_overlay, stderr=subprocess.DEVNULL)
             temp_files.append(next_output)
             current_input = next_output
         except subprocess.CalledProcessError as e:
@@ -145,9 +181,14 @@ def build_full_dub_audio(segments, out_audio_path):
 
 
 def mix_dub_over_video(orig_video, dub_audio, out_video, original_audio_reduce=0.15):
+    """Mix dubbed audio with original video, reducing original audio volume"""
     cmd = ['ffmpeg','-y','-i', orig_video, '-i', dub_audio,
            '-filter_complex', f"[0:a]volume={original_audio_reduce}[a0];[a0][1:a]amix=inputs=2:dropout_transition=0", '-c:v', 'copy', out_video]
-    subprocess.check_call(cmd)
+    try:
+        subprocess.check_call(cmd, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Video mixing failed: {e}")
+        raise
 
 
 def process_video_file(local_video_path):

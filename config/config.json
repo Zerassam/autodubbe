@@ -2,8 +2,9 @@
   "SOURCE_CHANNEL_ID": "UCf_PS8-T1w_VT1Kz-9G0nHw",
   "POLL_INTERVAL_SECONDS": 900,
   "TMP_DIR": "/tmp/autodubber",
+  "LOG_LEVEL": "INFO",
 
-"YOUTUBE": {
+  "YOUTUBE": {
     "CLIENT_SECRETS_FILE": "client_secrets.json",
     "CREDENTIALS_STORE": "youtube_creds.json",
     "API_KEY": "PUT_YOUR_KEY_HERE",
